@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 static CSS: Asset = asset!("/assets/main.css");
+static DogPic: Asset = asset!("/assets/dog1.jpg");
 
 #[component]
 fn DogApp() -> Element {
@@ -8,7 +9,7 @@ fn DogApp() -> Element {
         h1 { "HotDog!"}
         }
         section { id: "dogview", 
-        img { src:"https://images.dog.ceo/breeds/pitbull/dog-3981540_1280.jpg" }
+        img { src: DogPic }
         }
         section { id: "buttons",
             button { id: "skip", "skip"}
