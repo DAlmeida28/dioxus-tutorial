@@ -3,6 +3,30 @@ static CSS: Asset = asset!("/assets/main.css");
 // ImageAssetOptions lets us conver the .jpg to a AVIF with optimizaitons. 
 // static DOGPIC: Asset = asset!("/assets/dog1.jpg", ImageAssetOptions::new().with_avif());
 
+
+#[cfg(feature = "server")]
+thread_local! {
+    pub static DB: rusqlite::Connection = {
+        //Open the database fromthe persisted "hotdog.db" file
+        let conn = rusqlite::Connection::open("hotdog.db").expect("Failed to open database");
+
+        //Create the dogs table if it doesn't already exist
+        conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS dogs(
+                id INTEGER PRIMARY KEY,
+                url TEXT NOT NULL
+                );",
+            ).unwrap();
+            conn
+    }
+}
+
+#[server]
+async fn save_dog(image: String) -> Result<(), ServerFnError> {
+    DB.with(|f| f.execute("INSERT INTO dogs (url) VALUES (?1)", &[&image]))?;
+    Ok(())
+}
+
 #[derive(Clone)]
 struct TitleState(String);
 
@@ -39,7 +63,14 @@ fn DogView() -> Element {
         }
         section { id: "buttons",
             button { onclick: move |_| img_src.restart(), id: "skip", "skip" }
-            button { onclick: move |_| img_src.restart(), id: "save", "save" }
+            button { id: "save", 
+                onclick: move |_| async move {
+                    let current = img_src.cloned().unwrap();
+                    img_src.restart();
+                    _ = save_dog(current).await;
+                    },
+                "save"
+            }
         }
     }
 }
